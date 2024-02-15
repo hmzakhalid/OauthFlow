@@ -12,7 +12,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // In-memory data storage for simplicity
 let users: User[] = [{ id: '1', username: 'test', password: 'password' }];
-let clients: Client[] = [{ id: 'client1', clientSecret: 'secret1', redirectUris: ['http://localhost:3001/callback'], grants: ['authorization_code'] }];
+let clients: Client[] = [{ id: '1123', clientId: "client1", clientSecret: 'secret1', redirectUris: ['http://localhost:3001/callback'], grants: ['authorization_code'] }];
 let tokens: Token[] = [];
 let authorizationCodes: AuthorizationCode[] = [];
 
@@ -24,7 +24,8 @@ const model: OAuth2Server.AuthorizationCodeModel = {
         return authorizationCodes.find(code => code.authorizationCode === authorizationCode);
     },
     getClient: async (clientId: string, clientSecret: string) => {
-        return clients.find(client => client.clientId === clientId && client.clientSecret === clientSecret);
+        console.log('getClient:', clientId, clientSecret)
+        return clients.find(client => client.clientId === clientId && (clientSecret == null || client.clientSecret === clientSecret));
     },
     saveToken: async (token: Token, client: Client, user: User) => {
         const Token: Token = { ...token, user };
@@ -56,6 +57,7 @@ app.get('/authorize', async (req, res) => {
     const request = new Request(req);
     const response = new Response(res);
 
+    console.log('Request:', request.query);
     return oauth.authorize(request, response, {
         authenticateHandler: {
             handle: (req: any) => {
@@ -67,6 +69,7 @@ app.get('/authorize', async (req, res) => {
     }).then(code => {
         res.json(code);
     }).catch(err => {
+        console.error(err);
         res.status(err.code || 500).json(err);
     });
 });
