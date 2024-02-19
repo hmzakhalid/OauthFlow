@@ -8,7 +8,7 @@ const Request = OAuth2Server.Request;
 const Response = OAuth2Server.Response;
 const PORT = 3000;
 
-app.use(express.static("server/html"));
+app.use(express.static("server/dist"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -27,12 +27,15 @@ let authorizationCodes: AuthorizationCode[] = [];
 
 const model: OAuth2Server.AuthorizationCodeModel = {
     getClient: async (clientId: string, clientSecret: string) => {
-        return clients.find(client => client.clientId === clientId && (clientSecret == null || client.clientSecret === clientSecret));
+        const c = clients.find(client => client.clientId === clientId && (clientSecret == null || client.clientSecret === clientSecret));
+        console.log('Client:', c);
+        // Remove clientSecret from the client object before returning it
+        if (c) {
+            const { clientSecret, ...client } = c;
+            return client;
+        }
+        return null;
     },
-    // generateAuthorizationCode: async (client: Client, user: User, scope: string[]) => {
-    //     console.log('generateAuthorizationCode:', client, user, scope)
-    //     return Math.random().toString(36).slice(2);
-    // },
     getAccessToken: async (accessToken: string) => {
         return tokens.find(token => token.accessToken === accessToken) as OAuth2Server.Token;
     },
@@ -50,7 +53,8 @@ const model: OAuth2Server.AuthorizationCodeModel = {
     saveToken: async (token: Token, client: Client, user: User) => {
         const Token: Token = { ...token, client, user };
         tokens.push(Token);
-        return Token;
+        const { authorizationCode, ...response } = Token;
+        return response;
     },
     saveAuthorizationCode: async (code: AuthorizationCode, client: Client, user: User) => {
         const savedCode = { ...code, clientId: client.id, userId: user.id, client, user };
@@ -59,7 +63,6 @@ const model: OAuth2Server.AuthorizationCodeModel = {
     },
     revokeAuthorizationCode: async (code: AuthorizationCode) => {
         const index = authorizationCodes.findIndex(c => c.authorizationCode === code.authorizationCode);
-        console.log('revokeAuthorizationCode:', code, index)
         if (index !== -1) {
             authorizationCodes.splice(index, 1);
             return true;

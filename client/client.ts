@@ -7,7 +7,7 @@ import { URLSearchParams } from "url";
 const app = express();
 const PORT = 3001;
 
-app.use(express.static("client/html"));
+app.use(express.static("client/dist"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -36,12 +36,11 @@ app.get('/callback', (req, res) => {
         }
 
     }).then(response => {
+        console.log('Response:', response.data);
         const { accessToken } = response.data;
-        console.log('Access Token:', accessToken);
         axios.get('http://localhost:3000/user', {
             headers: { 'Authorization': `Bearer ${accessToken}` }
         }).then(response => {
-            console.log('User:', response.data);
             res.send(response.data);
         }).catch(err => {
             res.send(err);

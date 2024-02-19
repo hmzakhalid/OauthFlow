@@ -1,23 +1,19 @@
-/* global React ReactDOM ReactBootstrap ace */
-const { Form, Container, Button, Spinner, Modal, Row, Col } = ReactBootstrap;
-const { useState, useEffect } = React;
+import { useState, useEffect } from 'react'
+import { Form, Container, Button, Row, Col } from 'react-bootstrap';
 
-// Minimal OAuth2 client
-const App = () => {
-    const [user, setUser] = useState('');
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [redirectUri, setRedirectUri] = useState('');
+function App() {
+  const [redirectUri, setRedirectUri] = useState('');
     const [clientId, setClientId] = useState('');
     const [state, setState] = useState('');
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
-        setRedirectUri(params.get('redirect_uri'));
-        setClientId(params.get('client_id'));
-        setState(params.get('state'));
+        setRedirectUri(params.get('redirect_uri')!);
+        setClientId(params.get('client_id')!);
+        setState(params.get('state')!);
     }, []);
 
-    const handleLogin = async (e) => {
+    const handleLogin = async (e: any) => {
         e.preventDefault();
         const username = e.target.username.value;
         const password = e.target.password.value;
@@ -29,11 +25,10 @@ const App = () => {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ username, password }),
-                credentials: 'include', // Important for cookies to be sent and received
+                credentials: 'include',
             });
 
             if (response.ok) {
-                setIsAuthenticated(true);
                 window.location.href = `http://localhost:3000/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&state=${state}`;
 
             } else {
@@ -44,27 +39,6 @@ const App = () => {
         }
     };
 
-    const handleAuthorize = () => {
-        // What goes here?
-    };
-
-    if (isAuthenticated) {
-        return (
-            <Container>
-                <Row>
-                    <Col>
-                        <h1>OAuth2 Client</h1>
-                    </Col>
-                </Row>
-                <Row>
-                    <Col>
-                        <p>Welcome, {user}!</p>
-                        <Button onClick={handleAuthorize}>Authorize</Button>
-                    </Col>
-                </Row>
-            </Container>
-        );
-    }
 
     return (
         <Container>
@@ -90,9 +64,6 @@ const App = () => {
             </Row>
         </Container>
     );
+}
 
-};
-
-const domContainer = document.querySelector('#app');
-const root = ReactDOM.createRoot(domContainer);
-root.render(<App />);
+export default App
