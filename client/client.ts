@@ -38,7 +38,7 @@ app.get('/callback', (req, res) => {
         axios.get('http://localhost:3000/user', {
             headers: { 'Authorization': `Bearer ${accessToken}` }
         }).then(response => {
-            users = response.data.user;
+            users = response.data;
             res.redirect('/success');
         }).catch(err => {
             res.send(err);

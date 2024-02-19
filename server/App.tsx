@@ -53,7 +53,7 @@ function App() {
                 <Col>
                     <DynamicWidget />
                 </Col>
-                {verifed && (
+                {verifed && authToken && (
                     <button
                         onClick={() => {
                             window.location.href = `http://localhost:3000/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&state=${state}`;

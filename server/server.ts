@@ -115,6 +115,7 @@ app.get('/authorize', async (req, res) => {
 
     const { client_id, redirect_uri, state } = req.query;
     if (!req.session.user) {
+        console.log('User not authenticated');
         if (typeof client_id === 'string' && typeof redirect_uri === 'string' && typeof state === 'string') {
             return res.redirect(`http://localhost:3000/?client_id=${client_id}&redirect_uri=${encodeURIComponent(`${redirect_uri}`)}&response_type=code&state=${state}`);
 

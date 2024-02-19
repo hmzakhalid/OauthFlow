@@ -13,10 +13,8 @@ function App() {
     const state = Math.random().toString(36).slice(2);
     const authUrl = `http://localhost:3000/authorize?client_id=${client_id}&redirect_uri=${encodeURIComponent(redirect_uri)}&response_type=code&state=${state}`;
 
-    // Open a new window
     const authWindow = window.open(authUrl, 'AuthWindow', 'width=600,height=600');
 
-    // Polling to check if the window is closed
     const pollTimer = setInterval(function () {
       if (authWindow!.closed !== false) { // !== is required for compatibility with Opera
         clearInterval(pollTimer);
@@ -44,7 +42,7 @@ function App() {
       <Row>
         <Col>
           {Object.keys(user).length > 0 ? (<>
-            <h2>User</h2>
+            <h2>Response from 0xAuth</h2>
             <pre>{JSON.stringify(user, null, 2)}</pre>
           </>
           ) :
