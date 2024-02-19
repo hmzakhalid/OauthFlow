@@ -1,65 +1,54 @@
 import { useState, useEffect } from 'react'
 import { Form, Container, Button, Row, Col } from 'react-bootstrap';
+import { DynamicWidget, useDynamicContext } from '@dynamic-labs/sdk-react-core';
+
 
 function App() {
-  const [redirectUri, setRedirectUri] = useState('');
+    const [redirectUri, setRedirectUri] = useState('');
     const [clientId, setClientId] = useState('');
     const [state, setState] = useState('');
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
+        console.log('Params:', params.get('client_id'));
         setRedirectUri(params.get('redirect_uri')!);
         setClientId(params.get('client_id')!);
         setState(params.get('state')!);
     }, []);
 
-    const handleLogin = async (e: any) => {
-        e.preventDefault();
-        const username = e.target.username.value;
-        const password = e.target.password.value;
+    const { authToken } = useDynamicContext();
 
-        try {
-            const response = await fetch('http://localhost:3000/login', {
+    useEffect(() => {
+        if (authToken) {
+            console.log('Auth Success:', authToken);
+            fetch('http://localhost:3000/auth/verify', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ username, password }),
-                credentials: 'include',
-            });
-
-            if (response.ok) {
-                window.location.href = `http://localhost:3000/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&state=${state}`;
-
-            } else {
-                alert('Invalid credentials');
-            }
-        } catch (error) {
-            console.error('Login error:', error);
+                body: JSON.stringify({ authToken }),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    window.location.href = `http://localhost:3000/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&state=${state}`;
+                    console.log('Success:', data);
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
         }
-    };
-
+    }, [authToken]);
 
     return (
         <Container>
             <Row>
                 <Col>
-                    <h1>OAuth2 Client</h1>
+                    <h1>0xAuth</h1>
                 </Col>
             </Row>
             <Row>
                 <Col>
-                    <Form onSubmit={handleLogin}>
-                        <Form.Group controlId="username">
-                            <Form.Label>Username</Form.Label>
-                            <Form.Control type="text" placeholder="Enter username" />
-                        </Form.Group>
-                        <Form.Group controlId="password">
-                            <Form.Label>Password</Form.Label>
-                            <Form.Control type="password" placeholder="Password" />
-                        </Form.Group>
-                        <Button type="submit">Login</Button>
-                    </Form>
+                    <DynamicWidget />
                 </Col>
             </Row>
         </Container>

@@ -1,6 +1,9 @@
 import express from "express";
 import expressSession from "express-session";
+import jwt from 'jsonwebtoken';
 import OAuth2Server, { AuthorizationCode, Client, Token, User } from "@node-oauth/oauth2-server";
+import dotenv from "dotenv";
+dotenv.config();
 
 
 const app = express();
@@ -20,7 +23,7 @@ app.use(expressSession({
 }));
 
 // In-memory data storage for simplicity
-let users: User[] = [{ id: '1', username: 'test', password: 'password' }];
+let users: User[] = [{ id: '9ce9b091-6bf4-4733-a646-ce01a05577b7', email: 'local.test@yopmail.com', username: 'test', password: 'password' }];
 let clients: Client[] = [{ id: '1123', clientId: "client1", clientSecret: 'secret1', redirectUris: ['http://localhost:3001/callback'], grants: ['authorization_code'] }];
 let tokens: Token[] = [];
 let authorizationCodes: AuthorizationCode[] = [];
@@ -73,30 +76,44 @@ const model: OAuth2Server.AuthorizationCodeModel = {
 
 const oauth = new OAuth2Server({
     model,
-    // This is where we have to authenticate the user, commented out for now
-    // authenticateHandler: {
-    //     handle: (req: any) => {
-    //         return req.session.user;
-    //     }
     accessTokenLifetime: 60 * 60,
     allowBearerTokensInQueryString: true,
 });
 
-app.post('/login', (req, res) => {
-    const { username, password } = req.body;
-    // Simple authentication for demonstration
-    const user = users.find(u => u.username === username && u.password === password);
-    if (user) {
-        req.session.user = user; // Store user in session
-        res.json({ success: true });
-    } else {
-        res.status(401).json({ error: 'Invalid credentials' });
+app.get('/aa', (req, res) => {
+    return "hi"
+});
+
+app.post('/auth/verify', async (req, res) => {
+    const { authToken } = req.body;
+
+    try {
+        const publicKey = Buffer.from(process.env.DYNAMIC_PUBLIC_KEY!, 'base64').toString('utf-8');
+        const decoded = jwt.verify(authToken, publicKey, {
+            algorithms: ['RS256'],
+        });
+        if (typeof decoded === 'object') {
+            const userDetails = { id: decoded.last_verified_credential_id, email: decoded.email };
+
+            if (!req.session) {
+                return res.status(500).send('Session handling not configured.');
+            }
+            req.session.user = userDetails;
+        } else {
+            return res.status(401).json({ success: false, message: 'Invalid token.' });
+        }
+
+        res.json({ success: true, message: 'User authenticated and session set.' });
+    } catch (error) {
+        console.error('Error verifying JWT:', error);
+        res.status(401).json({ success: false, message: 'Invalid token.' });
     }
 });
 
 // OAuth authorization endpoint
 app.get('/authorize', async (req, res) => {
-
+    console.log('Session:', req.session.user)
+    console.log('Query:', req.query)
     const { client_id, redirect_uri, state } = req.query;
     if (!req.session.user) {
         if (typeof client_id === 'string' && typeof redirect_uri === 'string' && typeof state === 'string') {
@@ -113,6 +130,7 @@ app.get('/authorize', async (req, res) => {
     return oauth.authorize(request, response, {
         authenticateHandler: {
             handle: (req: any) => {
+                // User is already authenticated so return the user
                 return req.session.user;
             }
         }
