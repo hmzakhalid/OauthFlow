@@ -10,5 +10,10 @@
   },
   "ts-node": {
     "esm": true
-  }
+  },
+  "include": [
+    "server/**/*",
+    "client/**/*",
+    "types/**/*.d.ts",
+  ]
 }
