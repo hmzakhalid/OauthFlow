@@ -7,19 +7,21 @@ function App() {
     const [redirectUri, setRedirectUri] = useState('');
     const [clientId, setClientId] = useState('');
     const [state, setState] = useState('');
+    const [verifed, setVerified] = useState(false);
+
+    const { authToken } = useDynamicContext();
+
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
-        console.log('Params:', params.get('client_id'));
         setRedirectUri(params.get('redirect_uri')!);
         setClientId(params.get('client_id')!);
         setState(params.get('state')!);
     }, []);
 
-    const { authToken } = useDynamicContext();
 
     useEffect(() => {
-        if (authToken) {
+        if (authToken && redirectUri && clientId && state) {
             console.log('Auth Success:', authToken);
             fetch('http://localhost:3000/auth/verify', {
                 method: 'POST',
@@ -30,14 +32,15 @@ function App() {
             })
                 .then(response => response.json())
                 .then(data => {
-                    window.location.href = `http://localhost:3000/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&state=${state}`;
+                    setVerified(true);
+                    // window.location.href = `http://localhost:3000/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&state=${state}`;
                     console.log('Success:', data);
                 })
                 .catch((error) => {
                     console.error('Error:', error);
                 });
         }
-    }, [authToken]);
+    }, [authToken, redirectUri, clientId, state]);
 
     return (
         <Container>
@@ -50,6 +53,15 @@ function App() {
                 <Col>
                     <DynamicWidget />
                 </Col>
+                {verifed && (
+                    <button
+                        onClick={() => {
+                            window.location.href = `http://localhost:3000/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&state=${state}`;
+                        }}
+                    >
+                        Authorize
+                    </button>
+                )}
             </Row>
         </Container>
     );

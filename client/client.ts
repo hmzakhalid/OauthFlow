@@ -1,7 +1,9 @@
 import express from "express";
 import axios from "axios";
 import open from "open";
-import { URLSearchParams } from "url";
+import { URLSearchParams, fileURLToPath } from "url";
+import path, { dirname } from "path";
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 
 const app = express();
@@ -11,15 +13,10 @@ app.use(express.static("client/dist"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+let users: any = []
 const client_id = 'client1';
 const client_secret = 'secret1';
 const redirect_uri = 'http://localhost:3001/callback';
-app.get('/auth', (req, res) => {
-    const state = Math.random().toString(36).slice(2);
-    const url = `http://localhost:3000/authorize?client_id=${client_id}&redirect_uri=${redirect_uri}&response_type=code&state=${state}`;
-    open(url);
-    res.send('Please check your browser to authenticate.');
-});
 
 app.get('/callback', (req, res) => {
     const { code } = req.query;
@@ -41,7 +38,8 @@ app.get('/callback', (req, res) => {
         axios.get('http://localhost:3000/user', {
             headers: { 'Authorization': `Bearer ${accessToken}` }
         }).then(response => {
-            res.send(response.data);
+            users = response.data.user;
+            res.redirect('/success');
         }).catch(err => {
             res.send(err);
         });
@@ -50,7 +48,14 @@ app.get('/callback', (req, res) => {
     });
 });
 
+app.get('/user', (req, res) => {
+    res.json(users);
+});
 
+
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
 
 app.listen(PORT || 3001, () => {
     console.log("Server is running on port 3001");

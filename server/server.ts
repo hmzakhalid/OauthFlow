@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 
+
 const app = express();
 const Request = OAuth2Server.Request;
 const Response = OAuth2Server.Response;
@@ -80,9 +81,7 @@ const oauth = new OAuth2Server({
     allowBearerTokensInQueryString: true,
 });
 
-app.get('/aa', (req, res) => {
-    return "hi"
-});
+
 
 app.post('/auth/verify', async (req, res) => {
     const { authToken } = req.body;
@@ -112,8 +111,8 @@ app.post('/auth/verify', async (req, res) => {
 
 // OAuth authorization endpoint
 app.get('/authorize', async (req, res) => {
-    console.log('Session:', req.session.user)
-    console.log('Query:', req.query)
+    console.log('Query:', req.query);
+
     const { client_id, redirect_uri, state } = req.query;
     if (!req.session.user) {
         if (typeof client_id === 'string' && typeof redirect_uri === 'string' && typeof state === 'string') {
